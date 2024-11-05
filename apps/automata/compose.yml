@@ -1,0 +1,55 @@
+services:
+  web:
+    build: .
+    command: python manage.py migrate && uvicorn automata.asgi:application --host 0.0.0.0 --port 8000
+    environment:
+      - DJANGO_SETTINGS_MODULE=automata.production_settings
+    depends_on:
+      - database
+      - redis
+      - scheduler
+      - worker
+    restart: unless-stopped
+  scheduler:
+    build: .
+    command: celery -A automata beat -l info -S django
+    environment:
+      - DJANGO_SETTINGS_MODULE=automata.production_settings
+    depends_on:
+      - database
+      - redis
+      - worker
+    restart: unless-stopped
+  worker:
+    build: .
+    command: celery -A automata worker -l info
+    environment:
+      - DJANGO_SETTINGS_MODULE=automata.production_settings
+    depends_on:
+      - database
+      - redis
+    restart: unless-stopped 
+  database:
+    image: postgres:17
+    volumes:
+      - automata-database:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=automata
+      - POSTGRES_USER=automata
+      - POSTGRES_PASSWORD_FILE=/run/secrets/database_password
+    secrets:
+      - database_password
+    restart: unless-stopped
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - automata-redis:/data
+    restart: unless-stopped
+
+volumes:
+  automata-database:
+  automata-redis:
+
+secrets:
+  database_password:
+    file: .secrets/database_password.txt
