@@ -10,9 +10,11 @@ python = "^3.12"
 django = "^5.1.2"
 django-celery-beat = "^2.7.0"
 pyattendance = { path = "../../packages/pyattendance", develop = true }
-celery = {extras = ["redis"], version = "^5.4.0"}
-python-dotenv = "^1.0.1"
+celery = { extras = ["redis"], version = "^5.4.0" }
 uvicorn = "^0.32.0"
+pydining = { path = "../../packages/pydining", develop = true }
+psycopg2-binary = "^2.9.10"
+whitenoise = "^6.8.2"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"

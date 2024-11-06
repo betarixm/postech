@@ -1,34 +1,72 @@
 services:
   web:
-    build: .
-    command: python manage.py migrate && uvicorn automata.asgi:application --host 0.0.0.0 --port 8000
+    build:
+      context: ../../
+      dockerfile: apps/automata/Dockerfile
+    command: sh -c "python manage.py collectstatic --noinput && uvicorn automata.asgi:application --host 0.0.0.0 --port 8000"
     environment:
       - DJANGO_SETTINGS_MODULE=automata.production_settings
+      - DJANGO_SECRET_KEY_FILE=/run/secrets/django-secret-key
+      - DATABASE_PASSWORD_FILE=/run/secrets/database-password
+    secrets:
+      - django-secret-key
+      - database-password
     depends_on:
       - database
       - redis
       - scheduler
       - worker
+      - migrator
     restart: unless-stopped
   scheduler:
-    build: .
+    build:
+      context: ../../
+      dockerfile: apps/automata/Dockerfile
     command: celery -A automata beat -l info -S django
     environment:
       - DJANGO_SETTINGS_MODULE=automata.production_settings
+      - DJANGO_SECRET_KEY_FILE=/run/secrets/django-secret-key
+      - DATABASE_PASSWORD_FILE=/run/secrets/database-password
+    secrets:
+      - django-secret-key
+      - database-password
     depends_on:
       - database
       - redis
       - worker
+      - migrator
     restart: unless-stopped
   worker:
-    build: .
+    build:
+      context: ../../
+      dockerfile: apps/automata/Dockerfile
     command: celery -A automata worker -l info
     environment:
       - DJANGO_SETTINGS_MODULE=automata.production_settings
+      - DJANGO_SECRET_KEY_FILE=/run/secrets/django-secret-key
+      - DATABASE_PASSWORD_FILE=/run/secrets/database-password
+    secrets:
+      - django-secret-key
+      - database-password
     depends_on:
       - database
       - redis
-    restart: unless-stopped 
+      - migrator
+    restart: unless-stopped
+  migrator:
+    build:
+      context: ../../
+      dockerfile: apps/automata/Dockerfile
+    command: python manage.py migrate
+    environment:
+      - DJANGO_SETTINGS_MODULE=automata.production_settings
+      - DJANGO_SECRET_KEY_FILE=/run/secrets/django-secret-key
+      - DATABASE_PASSWORD_FILE=/run/secrets/database-password
+    secrets:
+      - django-secret-key
+      - database-password
+    depends_on:
+      - database
   database:
     image: postgres:17
     volumes:
@@ -36,9 +74,9 @@ services:
     environment:
       - POSTGRES_DB=automata
       - POSTGRES_USER=automata
-      - POSTGRES_PASSWORD_FILE=/run/secrets/database_password
+      - POSTGRES_PASSWORD_FILE=/run/secrets/database-password
     secrets:
-      - database_password
+      - database-password
     restart: unless-stopped
   redis:
     image: redis:7-alpine
@@ -50,6 +88,9 @@ volumes:
   automata-database:
   automata-redis:
 
+
 secrets:
-  database_password:
-    file: .secrets/database_password.txt
+  database-password:
+    file: .secrets/database-password.txt
+  django-secret-key:
+    file: .secrets/django-secret-key.txt
