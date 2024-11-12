@@ -150,4 +150,6 @@ def _pyattendance_connection(connection: Connection) -> _Connection:
 
 
 def _pyattendance_room_ble(ble: Ble) -> _RoomBle:
-    return _RoomBle.model_validate(ble.__dict__)
+    return _RoomBle.model_validate(
+        {"bleUuid": ble.uuid, "bleMajor": ble.major, "bleMinor": ble.minor}
+    )
