@@ -18,6 +18,7 @@ def test_attend(connection: Connection, user: User):
     response = attend(
         connection,
         user,
+        (2024, "2"),
         [],
     )
     assert isinstance(response, AttendResponse)

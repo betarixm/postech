@@ -124,7 +124,8 @@ def _attend_session(session: Session):
     response = attend(
         connection=_pyattendance_connection(connection),
         user=_pyattendance_user(session.user, Device.objects.get(user=session.user)),
-        room_bles=[_pyattendance_room_ble(ble)],
+        room_bles=[_pyattendance_room_ble(session.ble)],
+        term=(session.lecture.year, session.lecture.term),
     )
 
     Room.objects.get_or_create(

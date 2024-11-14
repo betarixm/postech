@@ -217,13 +217,14 @@ class AttendRequestBody(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
     user_id: str
-    user_pwd: str = ""
+    year_term: str
     ble_list: list[RoomBle]
 
     @staticmethod
-    def as_request_body(user: User, room_bles: list[RoomBle]):
+    def as_request_body(user: User, term: tuple[int, str], room_bles: list[RoomBle]):
         return AttendRequestBody(
             user_id=user.device.povis_id,
+            year_term=f"{term[0]}{term[1]}",
             ble_list=room_bles,
         )
 
@@ -245,15 +246,16 @@ class AttendRequest(BaseModel):
     body: AttendRequestBody
 
     @staticmethod
-    def as_request_body(user: User, room_bles: list[RoomBle]):
+    def as_request_body(user: User, term: tuple[int, str], room_bles: list[RoomBle]):
         return AttendRequest(
-            header=RequestHeader.as_request_body(user, endpoint_id="A001"),
-            body=AttendRequestBody.as_request_body(user, room_bles=room_bles),
+            header=RequestHeader.as_request_body(user, endpoint_id="R002"),
+            body=AttendRequestBody.as_request_body(
+                user, term=term, room_bles=room_bles
+            ),
         )
 
 
 class AttendResponseBody(BaseModel):
-    student_id: str
     room: str
     building: str
     date: date
@@ -265,7 +267,6 @@ class AttendResponseBody(BaseModel):
     @classmethod
     def from_response(cls, values: dict[str, Any]) -> dict[str, Any]:
         return {
-            "student_id": values["userId"],
             "room": values["bleRoomNm"],
             "building": values["bleBuildingNm"],
             "date": datetime.strptime(values["day"], "%Y%m%d")

@@ -27,11 +27,15 @@ def lecture_list(connection: Connection, user: User, current_date: date):
     return LectureListResponse.model_validate_json(response.text)
 
 
-def attend(connection: Connection, user: User, room_bles: list[RoomBle]):
+def attend(
+    connection: Connection, user: User, term: tuple[int, str], room_bles: list[RoomBle]
+):
     response = requests.post(
-        f"{connection.url}/eaas/A001",
+        f"{connection.url}/eaas/R002",
         headers={"User-Agent": "Mozilla/4.0 (compatible;)"},
-        json=AttendRequest.as_request_body(user, room_bles).model_dump(by_alias=True),
+        json=AttendRequest.as_request_body(user, term, room_bles).model_dump(
+            by_alias=True
+        ),
     )
 
     response.raise_for_status()
