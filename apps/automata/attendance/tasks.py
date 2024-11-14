@@ -22,7 +22,7 @@ def register_sessions_of_users():
         _register_sessions_of_user.delay(user)
 
 
-@app.task
+@app.task(max_retries=10)
 def _register_sessions_of_user(user: User):
     device = Device.objects.get(user=user)
 
@@ -75,7 +75,13 @@ def _register_sessions_of_user(user: User):
         absence_start = late_end
         absence_end = session_end
 
-        session, _ = Session.objects.get_or_create(
+        ble, _ = Ble.objects.get_or_create(
+            uuid=_pyattendance_lecture.room_bles[0].uuid,
+            major=_pyattendance_lecture.room_bles[0].major,
+            minor=_pyattendance_lecture.room_bles[0].minor,
+        )
+
+        Session.objects.get_or_create(
             lecture=lecture,
             user=user,
             defaults={
@@ -87,14 +93,8 @@ def _register_sessions_of_user(user: User):
                 "late_end": late_end,
                 "absence_start": absence_start,
                 "absence_end": absence_end,
+                "ble": ble,
             },
-        )
-
-        Ble.objects.get_or_create(
-            session=session,
-            uuid=_pyattendance_lecture.room_bles[0].uuid,
-            major=_pyattendance_lecture.room_bles[0].major,
-            minor=_pyattendance_lecture.room_bles[0].minor,
         )
 
 
@@ -113,13 +113,13 @@ def attend_sessions():
         _attend_session.delay(session)
 
 
-@app.task
+@app.task(max_retries=3)
 def _attend_session(session: Session):
     # TODO: Logic to get the available connection
     connection = Connection.objects.first()
-    assert connection is not None
+    assert connection is not None, "Connection is not set for the session"
 
-    ble = Ble.objects.get(session=session)
+    assert session.ble is not None, "BLE is not set for the session"
 
     response = attend(
         connection=_pyattendance_connection(connection),

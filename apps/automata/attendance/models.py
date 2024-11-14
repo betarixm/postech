@@ -45,9 +45,22 @@ class Lecture(models.Model):
         return f"{self.name or self.id} ({self.year}, {self.term})"
 
 
+class Ble(models.Model):
+    uuid = models.CharField(max_length=255)
+    major = models.IntegerField()
+    minor = models.IntegerField()
+
+    class Meta:
+        unique_together = ("uuid", "major", "minor")
+
+    def __str__(self):
+        return f"{self.uuid} ({self.major}, {self.minor})"
+
+
 class Session(models.Model):
     lecture = models.ForeignKey(Lecture, on_delete=models.CASCADE)
     user = models.ForeignKey(User, on_delete=models.PROTECT)
+    ble = models.ForeignKey(Ble, on_delete=models.PROTECT, null=True)
     session_start = models.DateTimeField()
     session_end = models.DateTimeField()
     attendance_start = models.DateTimeField()
@@ -77,22 +90,9 @@ class Room(models.Model):
         return f"{self.name} ({self.building})"
 
 
-class Ble(models.Model):
-    session = models.ForeignKey(Session, on_delete=models.CASCADE)
-    uuid = models.CharField(max_length=255)
-    major = models.IntegerField()
-    minor = models.IntegerField()
-
-    class Meta:
-        unique_together = ("uuid", "major", "minor")
-
-    def __str__(self):
-        return f"{self.uuid} ({self.major}, {self.minor})"
-
-
 class Log(models.Model):
-    user = models.ForeignKey(User, on_delete=models.PROTECT)
-    session = models.ForeignKey(Session, on_delete=models.PROTECT)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    session = models.ForeignKey(Session, on_delete=models.CASCADE)
     status = models.CharField(max_length=16)
     created_at = models.DateTimeField(auto_now_add=True)
 
