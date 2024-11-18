@@ -213,7 +213,7 @@ class LectureListResponse(BaseModel):
                 }
 
 
-class AttendRequestBody(BaseModel):
+class R002RequestBody(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
     user_id: str
@@ -222,7 +222,7 @@ class AttendRequestBody(BaseModel):
 
     @staticmethod
     def as_request_body(user: User, term: tuple[int, str], room_bles: list[RoomBle]):
-        return AttendRequestBody(
+        return R002RequestBody(
             user_id=user.device.povis_id,
             year_term=f"{term[0]}{term[1]}",
             ble_list=room_bles,
@@ -239,23 +239,21 @@ class AttendRequestBody(BaseModel):
         ]
 
 
-class AttendRequest(BaseModel):
+class R002Request(BaseModel):
     model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
 
     header: RequestHeader
-    body: AttendRequestBody
+    body: R002RequestBody
 
     @staticmethod
     def as_request_body(user: User, term: tuple[int, str], room_bles: list[RoomBle]):
-        return AttendRequest(
+        return R002Request(
             header=RequestHeader.as_request_body(user, endpoint_id="R002"),
-            body=AttendRequestBody.as_request_body(
-                user, term=term, room_bles=room_bles
-            ),
+            body=R002RequestBody.as_request_body(user, term=term, room_bles=room_bles),
         )
 
 
-class AttendResponseBody(BaseModel):
+class R002ResponseBody(BaseModel):
     room: str
     building: str
     date: date
@@ -278,9 +276,9 @@ class AttendResponseBody(BaseModel):
         }
 
 
-class AttendResponse(BaseModel):
+class R002Response(BaseModel):
     header: ResponseHeader
-    body: AttendResponseBody
+    body: R002ResponseBody
 
     @model_validator(mode="before")
     @classmethod
@@ -294,6 +292,51 @@ class AttendResponse(BaseModel):
                     "header": json.loads(values["header"]),
                     "body": json.loads(values["body"]),
                 }
+
+
+class U001RequestBody(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    ble_list: list[RoomBle]
+
+    @staticmethod
+    def as_request_body(room_bles: list[RoomBle]):
+        return U001RequestBody(ble_list=room_bles)
+
+    @field_serializer("ble_list")
+    def _serialize_ble_list(self, values: list[RoomBle]) -> list[dict[str, Any]]:
+        return [
+            {
+                **value.model_dump(by_alias=True),
+                "bleRssi": str(random.randint(-80, -60)),
+            }
+            for value in values
+        ]
+
+
+class U001Request(BaseModel):
+    model_config = ConfigDict(alias_generator=to_camel, populate_by_name=True)
+
+    header: RequestHeader
+    body: U001RequestBody
+
+    @staticmethod
+    def as_request_body(user: User, room_bles: list[RoomBle]):
+        return U001Request(
+            header=RequestHeader.as_request_body(user, endpoint_id="U001"),
+            body=U001RequestBody.as_request_body(room_bles=room_bles),
+        )
+
+
+class U001Response(BaseModel):
+    header: ResponseHeader
+
+    @model_validator(mode="before")
+    @classmethod
+    def from_response(cls, values: dict[str, Any]) -> dict[str, Any]:
+        return {
+            "header": json.loads(values["header"]),
+        }
 
 
 class Device(BaseModel):

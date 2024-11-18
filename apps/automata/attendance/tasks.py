@@ -121,7 +121,7 @@ def _attend_session(session: Session):
 
     assert session.ble is not None, "BLE is not set for the session"
 
-    response = attend(
+    response, _ = attend(
         connection=_pyattendance_connection(connection),
         user=_pyattendance_user(session.user, Device.objects.get(user=session.user)),
         room_bles=[_pyattendance_room_ble(session.ble)],
