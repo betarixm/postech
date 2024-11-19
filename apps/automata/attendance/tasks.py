@@ -84,9 +84,9 @@ def _register_sessions_of_user(user: User):
         Session.objects.get_or_create(
             lecture=lecture,
             user=user,
+            session_start=session_start,
+            session_end=session_end,
             defaults={
-                "session_start": session_start,
-                "session_end": session_end,
                 "attendance_start": attendance_start,
                 "attendance_end": attendance_end,
                 "late_start": late_start,

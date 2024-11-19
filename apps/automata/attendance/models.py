@@ -74,7 +74,7 @@ class Session(models.Model):
         return f"{self.lecture} ({self.user}, {dateformat.format(timezone.localtime(self.session_start), "H:i")} - {dateformat.format(timezone.localtime(self.session_end), "H:i")})"
 
     class Meta:
-        unique_together = ("lecture", "user")
+        unique_together = ("lecture", "user", "session_start", "session_end")
         ordering = ("-session_start",)
 
 
