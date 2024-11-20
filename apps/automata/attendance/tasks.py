@@ -102,12 +102,9 @@ def _register_sessions_of_user(user: User):
 def attend_sessions():
     now = timezone.now()
 
-    sessions = (
-        Session.objects.filter(attendance_start__lte=now, attendance_end__gte=now)
-        .filter(Q(log__status__isnull=True) | ~Q(log__status="출석"))
-        .distinct()
-        .all()
-    )
+    sessions = Session.objects.filter(
+        attendance_start__lte=now, attendance_end__gte=now
+    ).all()
 
     for session in sessions:
         _attend_session.delay(session)
